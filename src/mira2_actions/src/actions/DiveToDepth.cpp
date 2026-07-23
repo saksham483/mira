@@ -54,3 +54,4 @@ void DiveToDepth::onHalted() {
     publish_neutral(ros_state_);
     depth_pid_.emptyError(); 
 }
+//It uses a PID controller on the thrust (Z-axis). It calculates the error between the target_depth and the current_depth from telemetry. It outputs a PWM value (e.g., <1500 to dive, >1500 to rise)
