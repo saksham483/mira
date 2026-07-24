@@ -21,17 +21,17 @@ int main(int argc, char **argv) {
     BT::BehaviorTreeFactory factory;
 
     // Conditions
-    factory.registerNodeType<IsEmergency>("IsEmergency", &ros_state);
-    factory.registerNodeType<IsTaskEnabled>("IsTaskEnabled");
-    factory.registerNodeType<DetectImpact>("DetectImpact", &ros_state);
+    //factory.registerNodeType<IsEmergency>("IsEmergency", &ros_state);
+    //factory.registerNodeType<IsTaskEnabled>("IsTaskEnabled");
+    //factory.registerNodeType<DetectImpact>("DetectImpact", &ros_state);
     
     // Actions
     factory.registerNodeType<DiveToDepth>("DiveToDepth",&ros_state);
     factory.registerNodeType<Search>("Search", &ros_state,vision_tracker);
     factory.registerNodeType<TrackAndApproach>("TrackAndApproach",&ros_state,vision_tracker);
     factory.registerNodeType<BlindMove>("BlindMove",&ros_state);
-    factory.registerNodeType<ActuateMechanism>("ActuateMechanism",&ros_state);
-    factory.registerNodeType<EmergencySurface>("EmergencySurface",&ros_state);
+    //factory.registerNodeType<ActuateMechanism>("ActuateMechanism",&ros_state);
+    //factory.registerNodeType<EmergencySurface>("EmergencySurface",&ros_state);
     factory.registerNodeType<SetFlightMode>("SetFlightMode",&ros_state);
     auto tree = factory.createTreeFromFile(tree_xml_path);
     BT::Groot2Publisher publisher(tree, 1337);

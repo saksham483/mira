@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="SAUVC_Mission">
+        <Sequence name="MAIN_MISSION">
+            
+            <!-- Phase 1: Dive and Lock Depth -->
+            <Sequence name="DIVE_PHASE">
+                <!-- Switch to MANUAL so barometer doesn't fight the PID -->
+                <SetFlightMode mode="MANUAL"/>
+                <!-- Target 0.6 meters deep -->
+                <DiveToDepth target_depth="0.6" kp="50.0" kd="10.0" tolerance="0.05"/>
+                <!-- Switch to ALT_HOLD to latch the current depth -->
+                <SetFlightMode mode="ALT_HOLD"/>
+            </Sequence>
+
+            <!-- Phase 2: Gate Navigation with Fallback -->
+            <Fallback name="GATE_TASK_WITH_RETRY">
+                
+                <!-- Attempt 1: Nominal Gate Approach -->
+                <Sequence name="ATTEMPT_1">
+                    <Search target="gate" timeout="20.0"/>
+                    <!-- Track until it fills 60% of the screen -->
+                    <TrackAndApproach target="gate" avoid="" mode="forward" success_area="0.6" lat_kp="100.0" fwd_kp="100.0" yaw_kp="2.0" lost_timeout="3.0"/>
+                    <!-- Blindly push forward through the gate for 4 seconds -->
+                    <BlindMove duration="4.0" fwd="1650" lat="1500" thr="1500" yaw="1500"/>
+                </Sequence>
+
+                <!-- Attempt 2: Fallback (If it times out or loses the gate) -->
+                <Sequence name="RECOVERY_ATTEMPT">
+                    <!-- Back up slightly for 2 seconds -->
+                    <BlindMove duration="2.0" fwd="1350" lat="1500" thr="1500" yaw="1500"/>
+                    <!-- Try searching again with a longer timeout -->
+                    <Search target="gate" timeout="30.0"/>
+                    <TrackAndApproach target="gate" avoid="" mode="forward" success_area="0.6" lat_kp="100.0" fwd_kp="100.0" yaw_kp="2.0" lost_timeout="3.0"/>
+                    <BlindMove duration="4.0" fwd="1650" lat="1500" thr="1500" yaw="1500"/>
+                </Sequence>
+
+            </Fallback>
+
+            <!-- Phase 3: Stop the AUV safely after passing the gate -->
+            <SetFlightMode mode="ALT_HOLD"/>
+
+        </Sequence>
+    </BehaviorTree>
+</root>
