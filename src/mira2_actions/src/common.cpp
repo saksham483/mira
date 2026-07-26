@@ -3,7 +3,7 @@
 void publish_neutral(ROSState* ros_state, std::string mode) {
     custom_msgs::msg::Commands cmd;
     cmd.arm = true; 
-    cmd.mode = mode;
+    cmd.mode = "STABILIZE";
     cmd.forward = 1500; cmd.lateral = 1500;
     cmd.thrust = 1500;  cmd.yaw = 1500;
     cmd.pitch = 1500;   cmd.roll = 1500;

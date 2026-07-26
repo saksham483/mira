@@ -1,5 +1,4 @@
 #include "actions.hpp"
-#include <algorithm>
 
 BlindMove::BlindMove(const std::string& name, const BT::NodeConfiguration& config, ROSState* ros_state)
     : BT::StatefulActionNode(name, config), ros_state_(ros_state) {}
@@ -16,40 +15,25 @@ BT::PortsList BlindMove::providedPorts() {
 
 BT::NodeStatus BlindMove::onStart() {
     getInput("duration", duration_);
-    getInput("fwd", pwm_fwd_); 
-    getInput("lat", pwm_lat_);
-    getInput("thr", pwm_thr_); 
-    getInput("yaw", pwm_yaw_);
+    
+    int fwd, lat, thr, yaw;
+    getInput("fwd", fwd); getInput("lat", lat);
+    getInput("thr", thr); getInput("yaw", yaw);
+    // the commaand format is: BLIND,<fwd>,<lat>,<thr>,<yaw>
+    std::string cmd = "BLIND," + std::to_string(fwd) + "," + std::to_string(lat) + "," + 
+                      std::to_string(thr) + "," + std::to_string(yaw);
+    set_controller_state(ros_state_, cmd);
     
     start_time_ = ros_state_->node->now();
-    RCLCPP_INFO(ros_state_->node->get_logger(), "[BLIND MOVE] Executing for %.1f s", duration_);
     return BT::NodeStatus::RUNNING;
 }
 
 BT::NodeStatus BlindMove::onRunning() {
-    double elapsed = (ros_state_->node->now() - start_time_).seconds();
-    
-    if (elapsed >= duration_) {
-        RCLCPP_INFO(ros_state_->node->get_logger(), "[BLIND MOVE] Complete.");
-        publish_neutral(ros_state_);
+    if ((ros_state_->node->now() - start_time_).seconds() >= duration_) {
+        set_controller_state(ros_state_, "IDLE");
         return BT::NodeStatus::SUCCESS;
     }
-
-    custom_msgs::msg::Commands cmd;
-    cmd.arm = true; 
-    cmd.mode = "ALT_HOLD";
-    cmd.forward = std::clamp(pwm_fwd_, 1100, 1900);
-    cmd.lateral = std::clamp(pwm_lat_, 1100, 1900);
-    cmd.thrust = std::clamp(pwm_thr_, 1100, 1900);
-    cmd.yaw = std::clamp(pwm_yaw_, 1100, 1900);
-    
-    cmd.pitch = 1500; 
-    cmd.roll = 1500;
-    ros_state_->cmd_publisher->publish(cmd);
-
     return BT::NodeStatus::RUNNING;
 }
 
-void BlindMove::onHalted() {
-    publish_neutral(ros_state_);
-}
+void BlindMove::onHalted() { set_controller_state(ros_state_, "IDLE"); }

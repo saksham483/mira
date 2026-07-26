@@ -7,6 +7,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 23)
 
+# Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
@@ -15,13 +16,15 @@ find_package(ament_index_cpp REQUIRED)
 find_package(custom_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
 
-# Gather all source files
+# Glob all source files in the src/ directory and its subdirectories
 file(GLOB_RECURSE SRC_FILES 
     "src/*.cpp"
 )
 
+# Create executable
 add_executable(mira2_actions_exe ${SRC_FILES})
 
+# Link dependencies
 ament_target_dependencies(mira2_actions_exe
   rclcpp
   behaviortree_cpp
@@ -31,8 +34,26 @@ ament_target_dependencies(mira2_actions_exe
   ament_index_cpp
 )
 
-install(TARGETS mira2_actions_exe DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY launch/ DESTINATION share/${PROJECT_NAME}/launch)
-install(DIRECTORY config/ DESTINATION share/${PROJECT_NAME}/config)
+# Install executable
+install(TARGETS mira2_actions_exe
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install launch files
+install(DIRECTORY launch/
+  DESTINATION share/${PROJECT_NAME}/launch
+)
+
+# Install config files (the XML behavior tree)
+install(DIRECTORY config/
+  DESTINATION share/${PROJECT_NAME}/config
+)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  set(ament_cmake_copyright_FOUND TRUE)
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_package()

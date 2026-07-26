@@ -1,6 +1,5 @@
 #pragma once
 #include <behaviortree_cpp/action_node.h>
-#include <control_utils/control_utils.hpp>
 #include "../common.hpp"
 
 class DiveToDepth : public BT::StatefulActionNode {
@@ -12,9 +11,7 @@ public:
     void onHalted() override;
 private:
     ROSState* ros_state_;
-    PID_Controller depth_pid_;
     double target_depth_, tolerance_;
-    rclcpp::Time last_time_;
 };
 
 class Search : public BT::StatefulActionNode {
@@ -42,10 +39,9 @@ public:
 private:
     ROSState* ros_state_;
     std::shared_ptr<VisionTracker> tracker_;
-    PID_Controller lateral_pid_, forward_pid_, yaw_pid_;
     std::string target_object_, avoid_object_, mode_;
-    double success_area_, lost_timeout_, locked_heading_;
-    rclcpp::Time start_time_, last_time_;
+    double success_area_, lost_timeout_;
+    rclcpp::Time start_time_, last_seen_time_;
 };
 
 class BlindMove : public BT::StatefulActionNode {
@@ -58,7 +54,6 @@ public:
 private:
     ROSState* ros_state_;
     double duration_;
-    int pwm_fwd_, pwm_lat_, pwm_thr_, pwm_yaw_;
     rclcpp::Time start_time_;
 };
 //class meant to control the robotic arm will work on it when we have a arm
