@@ -17,10 +17,17 @@ find_package(custom_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
 
 # Glob all source files in the src/ directory and its subdirectories
-file(GLOB_RECURSE SRC_FILES 
-    "src/*.cpp"
+#file(GLOB_RECURSE SRC_FILES "src/*.cpp")
+set(SRC_FILES
+  src/common.cpp
+  src/main.cpp
+  src/actions/DiveToDepth.cpp
+  src/actions/Search.cpp
+  src/actions/TrackAndApproach.cpp
+  src/actions/BlindMove.cpp
+  src/actions/EmergencySurface.cpp
+  src/actions/SetFlightMode.cpp
 )
-
 # Create executable
 add_executable(mira2_actions_exe ${SRC_FILES})
 

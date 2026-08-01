@@ -29,6 +29,7 @@ public:
             });
     }
 };
+void publish_neutral(ROSState* ros_state, std::string mode = "STABILIZE");
 
 inline void set_controller_state(ROSState* ros_state, const std::string& state_cmd) {
     std_msgs::msg::String msg;
