@@ -1,3 +1,4 @@
+#include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <custom_msgs/msg/commands.hpp>
@@ -22,25 +23,12 @@ struct TargetData {
 
 class SauvcController : public rclcpp::Node {
 public:
-    SauvcController() : Node("sauvc_controller_node"),
-                        sway_pid_("sway", this),
-                        surge_pid_("surge", this),
-                        heave_pid_("heave", this),
-                        yaw_pid_("yaw", this) {
+    SauvcController() : Node("sauvc_controller_node") {
         
         declare_parameter("sway_kp", 100.0);   declare_parameter("sway_kd", 20.0);
         declare_parameter("surge_kp", 100.0);  declare_parameter("surge_kd", 20.0);
         declare_parameter("heave_kp", 150.0);  declare_parameter("heave_kd", 30.0);
         declare_parameter("yaw_kp", 3.0);      declare_parameter("yaw_kd", 1.0);
-
-        sway_pid_.kp = get_parameter("sway_kp").as_double(); sway_pid_.kd = get_parameter("sway_kd").as_double();
-        surge_pid_.kp = get_parameter("surge_kp").as_double(); surge_pid_.kd = get_parameter("surge_kd").as_double();
-        heave_pid_.kp = get_parameter("heave_kp").as_double(); heave_pid_.kd = get_parameter("heave_kd").as_double();
-        yaw_pid_.kp = get_parameter("yaw_kp").as_double(); yaw_pid_.kd = get_parameter("yaw_kd").as_double();
-
-        // Base offsets must be 0 for our custom math below, since we add/subtract from 1500 manually
-        sway_pid_.base_offset = 0; surge_pid_.base_offset = 0;
-        heave_pid_.base_offset = 0; yaw_pid_.base_offset = 0;
 
         cmd_pub_ = this->create_publisher<custom_msgs::msg::Commands>("/master/commands", 10);
         
@@ -52,6 +40,22 @@ public:
             
         telem_sub_ = this->create_subscription<custom_msgs::msg::Telemetry>(
             "/master/telemetry", 10, std::bind(&SauvcController::telemetry_callback, this, std::placeholders::_1));
+    }
+
+    void init() {
+        sway_pid_  = std::make_unique<PID_Controller>("sway", shared_from_this());
+        surge_pid_ = std::make_unique<PID_Controller>("surge", shared_from_this());
+        heave_pid_ = std::make_unique<PID_Controller>("heave", shared_from_this());
+        yaw_pid_   = std::make_unique<PID_Controller>("yaw", shared_from_this());
+
+        sway_pid_->kp = get_parameter("sway_kp").as_double();   sway_pid_->kd = get_parameter("sway_kd").as_double();
+        surge_pid_->kp = get_parameter("surge_kp").as_double(); surge_pid_->kd = get_parameter("surge_kd").as_double();
+        heave_pid_->kp = get_parameter("heave_kp").as_double(); heave_pid_->kd = get_parameter("heave_kd").as_double();
+        yaw_pid_->kp = get_parameter("yaw_kp").as_double();     yaw_pid_->kd = get_parameter("yaw_kd").as_double();
+
+        // Base offsets must be 0 for our custom math below, since we add/subtract from 1500 manually
+        sway_pid_->base_offset = 0; surge_pid_->base_offset = 0;
+        heave_pid_->base_offset = 0; yaw_pid_->base_offset = 0;
 
         last_time_ = this->now();
         timer_ = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&SauvcController::control_loop, this));
@@ -60,7 +64,10 @@ public:
     }
 
 private:
-    PID_Controller sway_pid_, surge_pid_, heave_pid_, yaw_pid_;
+    std::unique_ptr<PID_Controller> sway_pid_;
+    std::unique_ptr<PID_Controller> surge_pid_;
+    std::unique_ptr<PID_Controller> heave_pid_;
+    std::unique_ptr<PID_Controller> yaw_pid_;
     
     rclcpp::Publisher<custom_msgs::msg::Commands>::SharedPtr cmd_pub_;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr state_sub_;
@@ -100,8 +107,8 @@ private:
                 RCLCPP_INFO(this->get_logger(), "Tracking started. Heading locked at %.1f deg", locked_heading_);
             }
             
-            sway_pid_.emptyError(); surge_pid_.emptyError(); 
-            heave_pid_.emptyError(); yaw_pid_.emptyError();
+            sway_pid_->emptyError(); surge_pid_->emptyError(); 
+            heave_pid_->emptyError(); yaw_pid_->emptyError();
             
             prev_state_cmd_ = msg->data;
             RCLCPP_INFO(this->get_logger(), "State changed to: %s", msg->data.c_str());
@@ -154,7 +161,7 @@ private:
                 
                 // If error is positive (target > current), we need to go DOWN.
                 // PWM < 1500 goes down. So we SUBTRACT the PID output.
-                thr_pwm = 1500 - heave_pid_.pid_control(err, dt, false);
+                thr_pwm = 1500 - heave_pid_->pid_control(err, dt, false);
             }
         } 
         else if (current_state_str_ == "SEARCH") {
@@ -171,7 +178,7 @@ private:
                     
                     // Sway (X error)
                     double err_x = t_data.norm_x - 0.5;
-                    lat_pwm = 1500 + sway_pid_.pid_control(err_x, dt, false);
+                    lat_pwm = 1500 + sway_pid_->pid_control(err_x, dt, false);
 
                     // Obstacle Avoidance Override
                     TargetData avoid_data;
@@ -187,20 +194,20 @@ private:
                     else if (cam_mode == "bottom_cam") {
                         // Forward/Backward driven by Y-axis in bottom cam
                         double err_y = t_data.norm_y - 0.5;
-                        fwd_pwm = 1500 - surge_pid_.pid_control(err_y, dt, false);
+                        fwd_pwm = 1500 - surge_pid_->pid_control(err_y, dt, false);
                         
                         // Heave (Depth) driven by bounding box Area
                         double target_area = 0.5; // We want it to fill 50% of screen
                         double depth_err = target_area - t_data.area; 
                         // If err is positive (too small), we need to sink (<1500)
-                        thr_pwm = 1500 - heave_pid_.pid_control(depth_err, dt, false);
+                        thr_pwm = 1500 - heave_pid_->pid_control(depth_err, dt, false);
                     }
 
                     // Yaw Heading Lock
                     double yaw_err = locked_heading_ - current_heading_;
                     while (yaw_err > 180.0) yaw_err -= 360.0;
                     while (yaw_err < -180.0) yaw_err += 360.0;
-                    yaw_pwm = 1500 + yaw_pid_.pid_control(yaw_err, dt, false);
+                    yaw_pwm = 1500 + yaw_pid_->pid_control(yaw_err, dt, false);
                 } 
             }
         }
@@ -226,6 +233,7 @@ private:
 int main(int argc, char **argv) {
     rclcpp::init(argc, argv);
     auto node = std::make_shared<SauvcController>();
+    node->init();
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;

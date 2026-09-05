@@ -30,7 +30,7 @@ set(SRC_FILES
 )
 # Create executable
 add_executable(mira2_actions_exe ${SRC_FILES})
-
+add_executable(sauvc_controller_node src/sauvc/sauvc_controller_node.cpp)
 # Link dependencies
 ament_target_dependencies(mira2_actions_exe
   rclcpp
@@ -40,7 +40,18 @@ ament_target_dependencies(mira2_actions_exe
   vision_msgs
   ament_index_cpp
 )
+ament_target_dependencies(sauvc_controller_node
+  rclcpp
+  std_msgs
+  custom_msgs
+  vision_msgs
+  control_utils
+)
 
+install(TARGETS
+  sauvc_controller_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 # Install executable
 install(TARGETS mira2_actions_exe
   DESTINATION lib/${PROJECT_NAME}
