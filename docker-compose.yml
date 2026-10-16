@@ -1,45 +1,40 @@
 services:
-  mira:
-    image: mira
+  mira-perception:
     build:
       context: .
-      dockerfile: Dockerfile
-    tty: true
-    volumes:
-      - .:/workspace
-      - /dev:/dev
-      - /run/udev:/run/udev
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    privileged: true
-    user: "${_UID}:${_GID}"
-    network_mode: host
-    working_dir: /workspace
-    entrypoint: /bin/bash
-    environment:
-      - DISPLAY:"${DISPLAY}"
+      dockerfile: docker/perception.Dockerfile
+    image: mira-perception:latest
+    container_name: mira_perception
     runtime: nvidia
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-  mira-nogpu:
-    image: mira
-    build:
-      context: .
-      dockerfile: Dockerfile
+    network_mode: host
+    ipc: host
+    privileged: true
     tty: true
     volumes:
       - .:/workspace
       - /dev:/dev
-      - /run/udev:/run/udev
+      - /run/udev:/run/udev:ro
       - /tmp/.X11-unix:/tmp/.X11-unix
-    privileged: true
-    user: "${_UID}:${_GID}"
-    network_mode: host
-    working_dir: /workspace
-    entrypoint: /bin/bash
     environment:
-      - DISPLAY:"${DISPLAY}"
+      - DISPLAY=${DISPLAY}
+      - ROS_DOMAIN_ID=10
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    working_dir: /workspace
+
+  mira-controls:
+    build:
+      context: .
+      dockerfile: docker/controls.Dockerfile
+    image: mira-controls:latest
+    container_name: mira_controls
+    network_mode: host
+    ipc: host
+    privileged: true
+    tty: true
+    volumes:
+      - .:/workspace
+      - /dev:/dev
+    environment:
+      - ROS_DOMAIN_ID=20
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    working_dir: /workspace

@@ -7,6 +7,15 @@ install/
 # Ignore log directory
 log/
 
+# to avoid the corruption and collision of both dockers
+
+build_perception/
+install_perception/
+log_perception/
+build_controls/
+install_controls/
+log_controls/
+
 # Ignore .venv
 .venv/
 **/.venv/
