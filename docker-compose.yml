@@ -5,7 +5,7 @@ services:
       dockerfile: docker/perception.Dockerfile
     image: mira-perception:latest
     container_name: mira_perception
-    runtime: nvidia
+    #runtime: nvidia
     network_mode: host
     ipc: host
     privileged: true
@@ -18,6 +18,7 @@ services:
     environment:
       - DISPLAY=${DISPLAY}
       - ROS_DOMAIN_ID=10
+      - ROS_LOCALHOST_ONLY=1
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     working_dir: /workspace
 
@@ -36,5 +37,6 @@ services:
       - /dev:/dev
     environment:
       - ROS_DOMAIN_ID=20
+      - ROS_LOCALHOST_ONLY=1
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     working_dir: /workspace
