@@ -49,14 +49,15 @@ RUN ARCH=$(uname -m) && \
 # - Pre-install PyTorch CPU to avoid pulling 4GB of CUDA wheels
 # - Pin setuptools to 70.3.0 to fix the canonicalize_version error
 RUN pip3 install --no-cache-dir \
-    torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
+    torch torchvision \
+--extra-index-url https://pypi.jetson-ai-lab.dev/jp6/cu122 && \
     pip3 install --no-cache-dir "setuptools==70.3.0" "packaging>=24.0" && \
     pip3 install --no-cache-dir \
     ultralytics \
-    scipy \
-    opencv-python \
-    onnxruntime
-
+    scipy
+ RUN apt-get update && apt-get install --no-install-recommends -y \
+ python3-opencv
+RUN pip3 install --no-cache-dir onnxruntime-gpu --extra-index-url https://pypi.jetson-ai-lab.dev/jp6/cu122
 # 4. Entrypoint
 COPY docker/entrypoint_perception.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
