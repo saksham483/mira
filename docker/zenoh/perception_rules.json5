@@ -1,0 +1,50 @@
+{
+  mode: "peer",
+  connect: {
+    endpoints: ["tcp/127.0.0.1:7447"]
+  },
+  plugins: {
+    ros2dds: {
+      domain: 10,
+      ros_localhost_only: true,
+      allow: {
+        publishers: [
+          "/vision/detections",
+          "/aruco/pose",
+          "/aruco/error",
+          "/dock_pose",
+          "/pipeline/offset",
+          "/pipeline/angle",
+          "/pipeline/markers",
+          "/valve/detection",
+          "/valve/pose",
+          "/zed/odom",
+          "/master/telemetry",
+          "/master/commands",
+          "/master/depth",
+          "/master/heading",
+          "/emergency_stop",
+          "/controller/state"
+        ],
+        subscribers: [
+          "/vision/detections",
+          "/aruco/pose",
+          "/aruco/error",
+          "/dock_pose",
+          "/pipeline/offset",
+          "/pipeline/angle",
+          "/pipeline/markers",
+          "/valve/detection",
+          "/valve/pose",
+          "/zed/odom",
+          "/master/telemetry",
+          "/master/commands",
+          "/master/depth",
+          "/master/heading",
+          "/emergency_stop",
+          "/controller/state"
+        ]
+      }
+    }
+  }
+}

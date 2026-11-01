@@ -25,11 +25,10 @@ if(BUILD_TESTING)
 endif()
 
 install(PROGRAMS scripts/aruco_tracker.py DESTINATION lib/${PROJECT_NAME} RENAME aruco_tracker)
-install(PROGRAMS scripts/zed_yolo_xyz.py DESTINATION lib/${PROJECT_NAME} RENAME zed_yolo_xyz)
+install(PROGRAMS scripts/zed_yolo_tracker.py DESTINATION lib/${PROJECT_NAME} RENAME zed_yolo_tracker)
 install(PROGRAMS scripts/zed_3d_bbox.py DESTINATION lib/${PROJECT_NAME} RENAME zed_3d_bbox)
 
 install(FILES
-  models/valve_v1/weights/best.pt
   models/valve_v1/weights/best.onnx
   DESTINATION share/${PROJECT_NAME}/models/valve_v1/weights
 )

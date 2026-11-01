@@ -145,6 +145,34 @@ setup:
 clean:
 	@python3 mira.py clean
 
+PERCEPTION_PACKAGES = custom_msgs utils vision_boundingbox mira2_perception
+CONTROLS_PACKAGES   = custom_msgs control_utils mira2_actions mira2_control_master mira2_path_planning mira2_pid_control mira2_rov
+
+docker-build-perception:
+	docker compose build mira-perception
+
+docker-build-controls:
+	docker compose build mira-controls
+
+docker-build-all: docker-build-perception docker-build-controls
+
+build-perception:
+	docker compose run --rm mira-perception bash -c "colcon build --build-base build_perception --install-base install_perception --packages-up-to $(PERCEPTION_PACKAGES)"
+
+build-controls:
+	docker compose run --rm mira-controls bash -c "colcon build --build-base build_controls --install-base install_controls --packages-up-to $(CONTROLS_PACKAGES)"
+
+build-all: build-perception build-controls
+
+mira-perception:
+	xhost +local:docker || true
+	docker compose run --rm mira-perception
+
+mira-controls:
+	docker compose run --rm mira-controls
+
+clean-dual:
+	rm -rf build_perception install_perception log_perception build_controls install_controls log_controls
 # Help target
 help:
 	$(info Available targets:)

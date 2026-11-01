@@ -7,6 +7,7 @@ BT::PortsList ActuateMechanism::providedPorts() {
     return {
         BT::InputPort<int>("servo_id", 1, "1 or 2"),
         BT::InputPort<int>("pwm", 1900, "PWM to send to servo")
+        //change according to the pwm range of the servo
     };
 }
 
