@@ -5,7 +5,14 @@ services:
       dockerfile: docker/perception.Dockerfile
     image: mira-perception:latest
     container_name: mira_perception
-    #runtime: nvidia
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     network_mode: host
     ipc: host
     privileged: true
